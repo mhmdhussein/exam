@@ -1,123 +1,71 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 
-int	ft_strlen(char *str)
+#define MAX_BUFFER_SIZE (10000 + 1)
+
+int ft_strncmp(char *s1, char *s2, int n)
 {
-	int	i;
-
-	i = 0;
-	while (str[i])
-		++i;
-	return (i);
-}
-
-char	*ft_strdup(char *str)
-{
-	int	i;
-	char	*new;
-
-	i = 0;
-	while (str[i])
-		++i;
-	new = malloc((i + 1) * sizeof(char));
-	if (new == NULL)
-	{
-		perror("Error");
-		return (NULL);
-	}
-	i = 0;
-	while (str[i])
-	{
-		new[i] = str[i];
-		++i;
-	}
-	new[i] = '\0';
-	return (new);
-}
-
-char	*get_stdin(int fd)
-{
-	static char	buffer[1024];
-	static int	buffer_pos = 0;
-	static int	buffer_read = 0;
-	char		line[70000];
-	int		i = 0; 
-	while (1)
-	{
-		if (buffer_pos >= buffer_read)
-		{
-			buffer_read = read(fd, buffer, 1024);
-			if (buffer_read == -1)
-			{
-				perror("Error");
-				buffer_pos = 0;
-				buffer_read = 0;
-				return (NULL);
-			}
-			buffer_pos = 0;
-			if (buffer_read == 0)
-				break ;
-		}
-		line[i++] = buffer[buffer_pos++];
-		if (line[i - 1] == '\0')
-			break ;
-	}
-	if (i == 0)
-		return (NULL);
-	line[i] = '\0';
-	return (ft_strdup(line));
-}
-
-char	*str_filter(char *str, char *filter)
-{
-	char *new = ft_strdup(str);
 	int i = 0;
-	int j = 0;
-
-	while (str[i])
-	{
-		if (str[i] == filter[0])
-		{
-			j = 1;
-			while (j <= ft_strlen(filter))
-			{
-				if (str[i + j] != filter[j])
-					break;
-				++j;
-			}
-			if (j == ft_strlen(filter))
-			{
-				j = 0;
-				while (filter[j])
-				{
-					new[i] = '*';
-					++i;
-					++j;
-				}
-				--i;
-			}
-		}
-		++i;
-	}
-	return (new);
+	while (i < n && s1[i] == s2[i])
+		i++;
+	if (i == n)
+		return (1);
+	return (0);
 }
 
-int	main(int argc, char **argv)
+int main(int ac, char **av)
 {
-	if (argc != 2 || argv[1] == NULL)
+	if (ac != 2 || av[1] == NULL || strlen(av[1]) == 0)
 		return (1);
-	char 	*str;
-	str = get_stdin(0);
-	if (str == NULL)
+
+	char *buff = (char *)malloc(MAX_BUFFER_SIZE);
+
+	if (!buff)
+	{
+		fprintf(stderr, "Error: ");
+		perror("");
 		return (1);
-	char	*filter = argv[1];
-	char	*fstr;
-	fstr = str_filter(str, filter);
-	if (fstr == NULL)
+	}
+
+	char *search_str = av[1];
+	int search_len = strlen(av[1]);
+	int buff_idx = 0;
+	char current_char;
+	ssize_t bytes;
+
+	while ((bytes = read(STDIN_FILENO, &current_char, 1)) > 0)
+	{
+		if (buff_idx >= MAX_BUFFER_SIZE - 1)
+			return (1);
+		buff[buff_idx++] = current_char;
+	}
+
+	if (bytes == -1)
+	{
+		fprintf(stderr, "Error: ");
+		perror("");
 		return (1);
-	printf("%s", fstr);
-	free(str);
-	free(fstr);
+	}
+
+	int process_idx = 0;
+	while (buff[process_idx] != '\0')
+	{
+		if (process_idx + search_len <= buff_idx && ft_strncmp(&buff[process_idx], search_str, search_len))
+		{
+			for (int i = 0; i < search_len; i++)
+				write(STDOUT_FILENO, "*", 1);
+			process_idx += search_len;
+		}
+		else
+		{
+			write(STDOUT_FILENO, &buff[process_idx], 1);
+			process_idx++;
+		}
+	}
+
+	free(buff);
+
 	return (0);
 }
