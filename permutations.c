@@ -2,6 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int ft_strlen(char *s)
+{
+	int i = 0;
+	while (s[i])
+		i++;
+	return (i);
+}
+
 int ft_factorial(int n)
 {
 	if (n <= 1)
@@ -9,11 +17,19 @@ int ft_factorial(int n)
 	return (n * ft_factorial(n - 1));
 }
 
+void ft_strcpy(char *d, char *s)
+{
+	int i;
+	for (i = 0; s[i]; i++)
+		d[i] = s[i];
+	d[i] = '\0';
+}
+
 void generate_all_perms(int current_index, int size, char *s, char **all_perms, int *perms_row_index)
 {
 	if (current_index == size)
 	{
-		strcpy(all_perms[(*perms_row_index)], s);
+		ft_strcpy(all_perms[(*perms_row_index)], s);
 		(*perms_row_index)++;
 		return ;
 	}
@@ -29,13 +45,25 @@ void generate_all_perms(int current_index, int size, char *s, char **all_perms, 
 	}
 }
 
+int ft_strcmp(char *s1, char *s2)
+{
+	int i = 0;
+	while (s1[i] && s2[i])
+	{
+		if (s1[i] != s2[i])
+			return (s1[i] - s2[i]);
+		i++;
+	}
+	return (0);
+}
+
 void sort_perms(char **all_perms, int total_perms)
 {
 	for (int i = 0; i < total_perms; i++)
 	{
 		for (int j = i + 1; j < total_perms; j++)
 		{
-			if (strcmp(all_perms[i], all_perms[j]) > 0)
+			if (ft_strcmp(all_perms[i], all_perms[j]) > 0)
 			{
 				char *temp = all_perms[i];
 				all_perms[i] = all_perms[j];
@@ -59,7 +87,7 @@ int main(int ac, char **av)
 		return (1);
 	}
 	char *s = av[1];
-	int size = strlen(s);
+	int size = ft_strlen(s);
 	if (size == 0)
 	{
 		write(1, "\n", 1);
